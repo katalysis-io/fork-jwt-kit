@@ -1,4 +1,4 @@
-import CJWTKitCrypto
+import CCryptoOpenSSL
 
 protocol OpenSSLSigner {
     var algorithm: OpaquePointer { get }

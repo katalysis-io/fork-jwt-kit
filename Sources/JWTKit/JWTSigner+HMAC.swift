@@ -1,4 +1,4 @@
-import CJWTKitCrypto
+import CCryptoOpenSSL
 
 extension JWTSigner {
     // MARK: HMAC

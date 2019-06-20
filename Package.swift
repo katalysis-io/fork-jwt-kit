@@ -6,19 +6,12 @@ let package = Package(
     products: [
         .library(name: "JWTKit", targets: ["JWTKit", "JWT"]),
     ],
-    dependencies: [ ],
+    dependencies: [
+        .package(url: "https://github.com/vapor/crypto-kit.git", from: "4.0.0-alpha"),
+     ],
     targets: [
-        .systemLibrary(
-            name: "CJWTKitOpenSSL",
-            pkgConfig: "openssl",
-            providers: [
-                .apt(["openssl libssl-dev"]),
-                .brew(["openssl"])
-            ]
-        ),
-        .target(name: "CJWTKitCrypto", dependencies: ["CJWTKitOpenSSL"]),
-        .target(name: "JWTKit", dependencies: ["CJWTKitCrypto"]),
-        .target(name: "JWT", dependencies: ["CJWTKitCrypto"]),
+        .target(name: "JWTKit", dependencies: ["CryptoKit"]),
+        .target(name: "JWT", dependencies: ["CryptoKit", "JWTKit"]),
         .testTarget(name: "JWTKitTests", dependencies: ["JWTKit"]),
     ]
 )

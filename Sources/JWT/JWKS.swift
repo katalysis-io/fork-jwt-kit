@@ -1,4 +1,5 @@
 import Foundation
+import JWTKit
 
 /// A JSON Web Key Set.
 ///
@@ -15,14 +16,14 @@ public struct JWKS: Codable {
 
 public extension JWTSigners {
 
-    public convenience init(jwks: JWKS, skipAnonymousKeys: Bool = true) throws  {
+    convenience init(jwks: JWKS, skipAnonymousKeys: Bool = true) throws  {
         self.init()
         for jwk in jwks.keys {
             guard let kid = jwk.kid else {
                 if skipAnonymousKeys {
                     continue
                 } else {
-                    throw JWTError(identifier: "missingKID", reason: "At least a JSON Web Key in the JSON Web Key Set is missing a `kid`.")
+                    throw JWTError.generic(identifier: "missingKID", reason: "At least a JSON Web Key in the JSON Web Key Set is missing a `kid`.")
                 }
             }
 

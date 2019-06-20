@@ -1,7 +1,7 @@
 import Foundation
 
 public extension JWK {
-    public enum PublicKeyUse: RawRepresentable, Codable {
+    enum PublicKeyUse: RawRepresentable, Codable {
         case signature
         case encryption
         case other(String)

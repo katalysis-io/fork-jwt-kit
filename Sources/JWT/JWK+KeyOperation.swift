@@ -1,7 +1,7 @@
 import Foundation
 
 public extension JWK {
-    public enum KeyOperation: String, Codable {
+    enum KeyOperation: String, Codable {
         /// Compute digital signature or MAC.
         case sign
         /// Verify digital signature or MAC.

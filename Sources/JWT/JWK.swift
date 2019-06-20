@@ -1,5 +1,6 @@
 import Foundation
-import Crypto
+import CryptoKit
+import JWTKit
 
 /// A JSON Web Key.
 ///
@@ -158,18 +159,18 @@ public struct JWK: Codable {
 public extension JWTSigner {
 
     /// Creates a JWT signer with the supplied JWK
-    public static func jwk(key: JWK) throws -> JWTSigner {
+    static func jwk(key: JWK) throws -> JWTSigner {
         switch key.kty.lowercased() {
         case "rsa":
             guard let n = key.n else {
-                throw JWTError(identifier: "missingModulus", reason: "Modulus not specified for JWK RSA key.")
+                throw JWTError.generic(identifier: "missingModulus", reason: "Modulus not specified for JWK RSA key.")
             }
             guard let e = key.e else {
-                throw JWTError(identifier: "missingExponent", reason: "Exponent not specified for JWK RSA key.")
+                throw JWTError.generic(identifier: "missingExponent", reason: "Exponent not specified for JWK RSA key.")
             }
 
             guard let algorithm = key.alg?.lowercased() else {
-                throw JWTError(identifier: "missingAlgorithm", reason: "Algorithm missing for JWK RSA key.")
+                throw JWTError.generic(identifier: "missingAlgorithm", reason: "Algorithm missing for JWK RSA key.")
             }
 
             let rsaKey = try RSAKey.components(n: n, e: e, d: key.d)
@@ -182,10 +183,13 @@ public extension JWTSigner {
             case "rs512":
                 return JWTSigner.rs512(key: rsaKey)
             default:
-                throw JWTError(identifier: "invalidAlgorithm", reason: "Algorithm \(String(describing: key.alg)) not supported for JWK RSA key.")
+                throw JWTError.generic(
+                    identifier: "invalidAlgorithm",
+                    reason: "Algorithm \(String(describing: key.alg)) not supported for JWK RSA key.")
             }
         default:
-            throw JWTError(identifier: "invalidKeyType", reason: "Key type \(String(describing: key.kty)) not supported.")
+            throw JWTError.generic(
+                identifier: "invalidKeyType", reason: "Key type \(String(describing: key.kty)) not supported.")
         }
     }
 }
