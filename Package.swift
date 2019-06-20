@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "jwt-kit",
     products: [
-        .library(name: "JWTKit", targets: ["JWTKit"]),
+        .library(name: "JWTKit", targets: ["JWTKit", "JWT"]),
     ],
     dependencies: [ ],
     targets: [
@@ -18,6 +18,7 @@ let package = Package(
         ),
         .target(name: "CJWTKitCrypto", dependencies: ["CJWTKitOpenSSL"]),
         .target(name: "JWTKit", dependencies: ["CJWTKitCrypto"]),
+        .target(name: "JWT", dependencies: ["CJWTKitCrypto"]),
         .testTarget(name: "JWTKitTests", dependencies: ["JWTKit"]),
     ]
 )
