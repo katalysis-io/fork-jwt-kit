@@ -29,52 +29,20 @@ extension JWTSigner {
         ))
     }
 }
-//
-//public final class RSAKey: OpenSSLKey {
-//    public static func `public`<Data>(pem data: Data) throws -> RSAKey
-//        where Data: DataProtocol
-//    {
-//        let pkey = try self.load(pem: data) { bio in
-//            PEM_read_bio_PUBKEY(convert(bio), nil, nil, nil)
-//        }
-//        defer { EVP_PKEY_free(pkey) }
-//
-//        guard let c = EVP_PKEY_get1_RSA(pkey) else {
-//            throw JWTError.signingAlgorithmFailure(RSAError.keyInitializationFailure)
-//        }
-//        return self.init(convert(c), .public)
-//    }
-//
-//    public static func `private`<Data>(pem data: Data) throws -> RSAKey
-//        where Data: DataProtocol
-//    {
-//        let pkey = try self.load(pem: data) { bio in
-//            PEM_read_bio_PrivateKey(convert(bio), nil, nil, nil)
-//        }
-//        defer { EVP_PKEY_free(pkey) }
-//
-//        guard let c = EVP_PKEY_get1_RSA(pkey) else {
-//            throw JWTError.signingAlgorithmFailure(RSAError.keyInitializationFailure)
-//        }
-//        return self.init(convert(c), .private)
-//    }
-//
-//    enum KeyType {
-//        case `public`, `private`
-//    }
-//
-//    let type: KeyType
-//    let c: OpaquePointer
-//
-//    init(_ c: OpaquePointer, _ type: KeyType) {
-//        self.type = type
-//        self.c = c
-//    }
-//
-//    deinit {
-//        RSA_free(convert(self.c))
-//    }
-//}
+
+extension RSAKey: OpenSSLKey {
+    func getParameters() throws -> Parameters {
+        let pN: OpaquePointer = RSA_get0_n(self.c.pointer);
+        let pE: OpaquePointer = RSA_get0_e(self.c.pointer);
+        
+        return Parameters(n: BN.convert(pN), e: BN.convert(pE));
+    }
+
+    struct Parameters {
+        public let n: String;
+        public let e: String;
+    }
+}
 
 // MARK: Private
 

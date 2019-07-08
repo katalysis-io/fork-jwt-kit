@@ -1,4 +1,5 @@
 import CCryptoOpenSSL
+import Foundation
 
 protocol OpenSSLSigner {
     var algorithm: OpaquePointer { get }
@@ -55,5 +56,31 @@ extension OpenSSLKey {
             throw JWTError.signingAlgorithmFailure(OpenSSLError.bioConversionFailure)
         }
         return c
+    }
+}
+
+struct BN {
+    public static func size(_ bn: OpaquePointer) -> Int {
+        // BN_num_bytes
+        return Int((BN_num_bits(bn) * 7) / 8);
+    }
+    
+    public static func convert(_ bnBase64: String) -> OpaquePointer? {
+        guard let data = Data(base64URLEncoded: bnBase64) else {
+            return nil
+        }
+        
+        return data.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> OpaquePointer in
+            return BN_bin2bn(p.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32(p.count), nil)
+        }
+    }
+    
+    public static func convert(_ bn: OpaquePointer) -> String {
+        let bnPointer = UnsafeMutablePointer<UInt8>.allocate(capacity: BN.size(bn));
+        defer { bnPointer.deallocate() };
+        
+        let actualBytes = Int(BN_bn2bin(bn, bnPointer));
+        let data = Data(bytes: bnPointer, count: actualBytes);
+        return data.base64URLEncodedString();
     }
 }
