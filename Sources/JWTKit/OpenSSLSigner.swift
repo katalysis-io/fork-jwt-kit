@@ -37,7 +37,7 @@ extension OpenSSLSigner {
     }
 }
 
-protocol OpenSSLKey { }
+public protocol OpenSSLKey { }
 
 extension OpenSSLKey {
     static func load<Data, T>(pem data: Data, _ closure: (OpaquePointer) -> (T?)) throws -> T

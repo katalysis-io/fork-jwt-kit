@@ -39,7 +39,7 @@ public final class ECDSAKey: OpenSSLKey {
         return .init(c)
     }
 
-    static func components(x: String, y: String) throws -> ECDSAKey {
+    public static func components(x: String, y: String) throws -> ECDSAKey {
         let ec = try ECDSAKey.generate();
         let group: OpaquePointer = EC_KEY_get0_group(ec.c);
         let pubKey: OpaquePointer = EC_KEY_get0_public_key(ec.c);
@@ -68,7 +68,7 @@ public final class ECDSAKey: OpenSSLKey {
         return self.init(c)
     }
 
-    func getParameters() throws -> Parameters {
+    public func getParameters() throws -> Parameters {
         let group: OpaquePointer = EC_KEY_get0_group(self.c);
         let pubKey: OpaquePointer = EC_KEY_get0_public_key(self.c);
         
@@ -99,8 +99,7 @@ public final class ECDSAKey: OpenSSLKey {
         EC_KEY_free(self.c)
     }
 
-    
-    struct Parameters {
+    public struct Parameters {
         public let x: String;
         public let y: String;
     }
