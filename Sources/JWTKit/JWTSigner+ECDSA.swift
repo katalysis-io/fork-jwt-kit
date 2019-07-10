@@ -81,7 +81,7 @@ public final class ECDSAKey: OpenSSLKey {
         let pXw = OpaquePointer(pX);
         let pYw = OpaquePointer(pY);
         
-        if (EC_POINT_set_affine_coordinates_GFp(group, pubKey, pXw, pYw, nil) != 1) {
+        if (EC_POINT_get_affine_coordinates_GFp(group, pubKey, pXw, pYw, nil) != 1) {
             throw JWTError.generic(identifier: "ecCoordinates", reason: "EC coordinates retrieval failed");
         }
         
