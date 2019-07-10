@@ -1,7 +1,22 @@
 import XCTest
 import JWTKit
+import CryptoKit
 
 class JWTKitTests: XCTestCase {
+
+    func testGetECParameters() throws {
+        let message = "test".bytes;
+
+        let ec = try ECDSAKey.generate();
+        let ecSigner = JWTSigner.es384(key: ec);
+
+        let signature = try ecSigner.algorithm.sign(message);
+
+        let param = try ec.getParameters();
+        let ecVerifier = try JWTSigner.es384(key: ECDSAKey.components(x: param.x, y: param.y));
+        XCTAssertTrue(try ecVerifier.algorithm.verify(signature, signs: message));
+    }
+    
     func testParse() throws {
         let data = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImV4cCI6OTk5OTk5OTk5OTk5fQ.Ks7KcdjrlUTYaSNeAO5SzBla_sFCHkUh4vvJYn6q29U"
 
@@ -57,8 +72,8 @@ class JWTKitTests: XCTestCase {
     }
 
     func testRSA() throws {
-        let privateSigner = try JWTSigner.rs256(key: .private(pem: rsaPrivateKey.bytes))
-        let publicSigner = try JWTSigner.rs256(key: .public(pem: rsaPublicKey.bytes))
+        let privateSigner = try JWTSigner.rs256(key: .private(pem: CryptoData.bytes(rsaPrivateKey.bytes)))
+        let publicSigner = try JWTSigner.rs256(key: .public(pem: CryptoData.bytes(rsaPublicKey.bytes)))
 
         let payload = TestPayload(
             sub: "vapor",
@@ -73,7 +88,7 @@ class JWTKitTests: XCTestCase {
     }
 
     func testRSASignWithPublic() throws {
-        let publicSigner = try JWTSigner.rs256(key: .public(pem: rsaPublicKey.bytes))
+        let publicSigner = try JWTSigner.rs256(key: .public(pem: CryptoData.bytes(rsaPublicKey.bytes)))
         let payload = TestPayload(
             sub: "vapor",
             name: "Foo",

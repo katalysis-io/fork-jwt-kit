@@ -32,10 +32,9 @@ extension JWTSigner {
 
 extension RSAKey: OpenSSLKey {
     func getParameters() throws -> Parameters {
-        let pN: OpaquePointer = RSA_get0_n(self.c.pointer);
-        let pE: OpaquePointer = RSA_get0_e(self.c.pointer);
-        
-        return Parameters(n: BN.convert(pN), e: BN.convert(pE));
+        let bnN = BN(RSA_get0_n(self.c.pointer));
+        let bnE = BN(RSA_get0_e(self.c.pointer));
+        return Parameters(n: bnN.toBase64(), e: bnE.toBase64());
     }
 
     struct Parameters {

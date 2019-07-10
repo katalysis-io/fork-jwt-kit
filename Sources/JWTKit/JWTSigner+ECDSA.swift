@@ -43,7 +43,13 @@ public final class ECDSAKey: OpenSSLKey {
         let ec = try ECDSAKey.generate();
         let group: OpaquePointer = EC_KEY_get0_group(ec.c);
         let pubKey: OpaquePointer = EC_KEY_get0_public_key(ec.c);
-        let code = EC_POINT_set_affine_coordinates_GFp(group, pubKey, BN.convert(x), BN.convert(y), nil)
+        guard let bnX = BN.convert(x) else {
+             throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to interptet x");
+        }
+        guard let bnY = BN.convert(y) else {
+            throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to interptet y");
+        }
+        let code = EC_POINT_set_affine_coordinates_GFp(group, pubKey, bnX.c, bnY.c, nil)
         if (code != 1) {
             throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to set public key");
         }
@@ -71,21 +77,14 @@ public final class ECDSAKey: OpenSSLKey {
     public func getParameters() throws -> Parameters {
         let group: OpaquePointer = EC_KEY_get0_group(self.c);
         let pubKey: OpaquePointer = EC_KEY_get0_public_key(self.c);
-        
-        let pX = UnsafeMutablePointer<UInt8>.allocate(capacity: 100);
-        defer { pX.deallocate() };
-        let pY = UnsafeMutablePointer<UInt8>.allocate(capacity: 100);
-        defer { pY.deallocate() };
-        
-        // openssl BIGNUM struct in 4xInt and 1xInt*
-        let pXw = OpaquePointer(pX);
-        let pYw = OpaquePointer(pY);
-        
-        if (EC_POINT_get_affine_coordinates_GFp(group, pubKey, pXw, pYw, nil) != 1) {
+
+        let bnX = BN();
+        let bnY = BN();
+        if (EC_POINT_get_affine_coordinates_GFp(group, pubKey, bnX.c, bnY.c, nil) != 1) {
             throw JWTError.generic(identifier: "ecCoordinates", reason: "EC coordinates retrieval failed");
         }
-        
-        return Parameters(x: BN.convert(pXw), y: BN.convert(pYw));
+
+        return Parameters(x: bnX.toBase64(), y: bnY.toBase64());
     }
 
 
