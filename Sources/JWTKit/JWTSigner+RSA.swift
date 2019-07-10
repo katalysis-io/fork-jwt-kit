@@ -31,6 +31,7 @@ extension JWTSigner {
 }
 
 extension RSAKey: OpenSSLKey {
+/*
     func getParameters() throws -> Parameters {
         let pN: OpaquePointer = RSA_get0_n(self.c.pointer);
         let pE: OpaquePointer = RSA_get0_e(self.c.pointer);
@@ -42,6 +43,7 @@ extension RSAKey: OpenSSLKey {
         public let n: String;
         public let e: String;
     }
+*/
 }
 
 // MARK: Private
