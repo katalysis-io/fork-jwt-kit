@@ -43,7 +43,7 @@ public final class ECDSAKey: OpenSSLKey {
         let ec = try ECDSAKey.generate();
         let group: OpaquePointer = EC_KEY_get0_group(ec.c);
         let pubKey: OpaquePointer = EC_KEY_get0_public_key(ec.c);
-        let code = EC_POINT_set_affine_coordinates(group, pubKey, BN.convert(x), BN.convert(y), nil)
+        let code = EC_POINT_set_affine_coordinates_GFp(group, pubKey, BN.convert(x), BN.convert(y), nil)
         if (code != 1) {
             throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to set public key");
         }
@@ -81,7 +81,7 @@ public final class ECDSAKey: OpenSSLKey {
         let pXw = OpaquePointer(pX);
         let pYw = OpaquePointer(pY);
         
-        if (EC_POINT_get_affine_coordinates(group, pubKey, pXw, pYw, nil) != 1) {
+        if (EC_POINT_set_affine_coordinates_GFp(group, pubKey, pXw, pYw, nil) != 1) {
             throw JWTError.generic(identifier: "ecCoordinates", reason: "EC coordinates retrieval failed");
         }
         
