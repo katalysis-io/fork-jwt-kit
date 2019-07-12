@@ -187,6 +187,31 @@ public extension JWTSigner {
                     identifier: "invalidAlgorithm",
                     reason: "Algorithm \(String(describing: key.alg)) not supported for JWK RSA key.")
             }
+        case "ec":
+            guard let x = key.x else {
+                throw JWTError.generic(identifier: "missingX", reason: "X not specified for JWK EC key.")
+            }
+            guard let y = key.y else {
+                throw JWTError.generic(identifier: "missingY", reason: "Y not specified for JWK EC key.")
+            }
+            
+            guard let algorithm = key.alg?.lowercased() else {
+                throw JWTError.generic(identifier: "missingAlgorithm", reason: "Algorithm missing for JWK EC key.")
+            }
+            
+            let ecKey = try ECDSAKey.components(x: x, y: y)
+            switch algorithm {
+            case "es256":
+                return JWTSigner.es256(key: ecKey)
+            case "es384":
+                return JWTSigner.es384(key: ecKey)
+            case "es512":
+                return JWTSigner.es512(key: ecKey)
+            default:
+                throw JWTError.generic(
+                    identifier: "invalidAlgorithm",
+                    reason: "Algorithm \(String(describing: key.alg)) not supported for JWK EC key.")
+            }
         default:
             throw JWTError.generic(
                 identifier: "invalidKeyType", reason: "Key type \(String(describing: key.kty)) not supported.")
