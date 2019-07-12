@@ -40,20 +40,22 @@ public final class ECDSAKey: OpenSSLKey {
     }
 
     public static func components(x: String, y: String) throws -> ECDSAKey {
-        let ec = try ECDSAKey.generate();
-        let group: OpaquePointer = EC_KEY_get0_group(ec.c);
-        let pubKey: OpaquePointer = EC_KEY_get0_public_key(ec.c);
+        guard let c = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1) else {
+            throw JWTError.signingAlgorithmFailure(ECDSAError.newKeyByCurveFailure)
+        }
+
         guard let bnX = BN.convert(x) else {
-             throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to interptet x");
+            throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to interpret x as BN");
         }
         guard let bnY = BN.convert(y) else {
-            throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to interptet y");
+            throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to interpret y as BN");
         }
-        let code = EC_POINT_set_affine_coordinates_GFp(group, pubKey, bnX.c, bnY.c, nil)
-        if (code != 1) {
+
+        if (1 != EC_KEY_set_public_key_affine_coordinates(c, bnX.c, bnY.c)) {
             throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to set public key");
         }
-        return ec;
+
+        return .init(c)
     }
 
     public static func `public`<Data>(pem data: Data) throws -> ECDSAKey
