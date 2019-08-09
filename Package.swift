@@ -10,8 +10,8 @@ let package = Package(
         .package(url: "https://github.com/vapor/crypto-kit.git", from: "4.0.0-alpha"),
      ],
     targets: [
-        .target(name: "JWTKit", dependencies: ["CryptoKit"]),
-        .target(name: "JWT", dependencies: ["CryptoKit", "JWTKit"]),
+        .target(name: "JWTKit", dependencies: ["OpenCrypto"]),
+        .target(name: "JWT", dependencies: ["OpenCrypto", "JWTKit"]),
         .testTarget(name: "JWTKitTests", dependencies: ["JWTKit"]),
     ]
 )
