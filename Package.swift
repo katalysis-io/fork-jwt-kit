@@ -7,11 +7,11 @@ let package = Package(
         .library(name: "JWTKit", targets: ["JWTKit", "JWT"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/crypto-kit.git", from: "4.0.0-alpha"),
+        .package(url: "https://github.com/vapor/crypto-kit.git", .exact("4.0.0-alpha.1")),
      ],
     targets: [
-        .target(name: "JWTKit", dependencies: ["OpenCrypto"]),
-        .target(name: "JWT", dependencies: ["OpenCrypto", "JWTKit"]),
+        .target(name: "JWTKit", dependencies: ["CryptoKit"]),
+        .target(name: "JWT", dependencies: ["CryptoKit", "JWTKit"]),
         .testTarget(name: "JWTKitTests", dependencies: ["JWTKit"]),
     ]
 )
