@@ -60,14 +60,14 @@ extension OpenSSLKey {
 }
 
 class BN {
-    let c: UnsafeMutablePointer<BIGNUM>?;
+    let c: OpaquePointer;
 
     public init() {
         self.c = BN_new();
     }
 
     init(_ ptr: OpaquePointer) {
-        self.c = UnsafeMutablePointer<BIGNUM>(ptr);
+        self.c = ptr;
     }
 
     deinit {
@@ -80,7 +80,7 @@ class BN {
         }
 
         let c = data.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> OpaquePointer in
-            return OpaquePointer(BN_bin2bn(p.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32(p.count), nil))
+            return BN_bin2bn(p.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32(p.count), nil)
         };
         return BN(c);
     }
