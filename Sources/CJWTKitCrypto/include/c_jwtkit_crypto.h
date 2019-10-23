@@ -2,6 +2,7 @@
 #define C_JWTKIT_OPENSSL_H
 
 #include <openssl/conf.h>
+#include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/bio.h>
