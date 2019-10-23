@@ -1,4 +1,5 @@
 import CJWTKitCrypto
+import Foundation
 
 protocol OpenSSLSigner {
     var algorithm: OpaquePointer { get }
@@ -36,7 +37,7 @@ extension OpenSSLSigner {
     }
 }
 
-protocol OpenSSLKey { }
+public protocol OpenSSLKey { }
 
 extension OpenSSLKey {
     static func load<Data, T>(pem data: Data, _ closure: (OpaquePointer) -> (T?)) throws -> T
@@ -55,5 +56,41 @@ extension OpenSSLKey {
             throw JWTError.signingAlgorithmFailure(OpenSSLError.bioConversionFailure)
         }
         return c
+    }
+}
+
+class BN {
+    let c: UnsafeMutablePointer<BIGNUM>?;
+
+    public init() {
+        self.c = BN_new();
+    }
+
+    init(_ ptr: OpaquePointer) {
+        self.c = UnsafeMutablePointer<BIGNUM>(ptr);
+    }
+
+    deinit {
+        BN_free(self.c);
+    }
+
+    public static func convert(_ bnBase64: String) -> BN? {
+        guard let data = Data(base64Encoded: bnBase64) else {
+            return nil
+        }
+
+        let c = data.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> OpaquePointer in
+            return OpaquePointer(BN_bin2bn(p.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32(p.count), nil))
+        };
+        return BN(c);
+    }
+
+    public func toBase64(_ size: Int = 1000) -> String {
+        let pBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: size);
+        defer { pBuffer.deallocate() };
+
+        let actualBytes = Int(BN_bn2bin(self.c, pBuffer));
+        let data = Data(bytes: pBuffer, count: actualBytes);
+        return data.base64EncodedString();
     }
 }

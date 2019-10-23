@@ -66,6 +66,45 @@ public final class ECDSAKey: OpenSSLKey {
     deinit {
         EC_KEY_free(self.c)
     }
+
+    public static func components(x: String, y: String) throws -> ECDSAKey {
+        guard let c = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1) else {
+            throw JWTError.signingAlgorithmFailure(ECDSAError.newKeyByCurveFailure)
+        }
+
+        guard let bnX = BN.convert(x) else {
+            throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to interpret x as BN");
+        }
+        guard let bnY = BN.convert(y) else {
+            throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to interpret y as BN");
+        }
+
+        if (1 != EC_KEY_set_public_key_affine_coordinates(c, bnX.c, bnY.c)) {
+            throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to set public key");
+        }
+
+        return .init(c)
+    }
+
+    public func getParameters() throws -> Parameters {
+        let group: OpaquePointer = EC_KEY_get0_group(self.c);
+        let pubKey: OpaquePointer = EC_KEY_get0_public_key(self.c);
+
+        let bnX = BN();
+        let bnY = BN();
+        if (EC_POINT_get_affine_coordinates_GFp(group, pubKey, bnX.c, bnY.c, nil) != 1) {
+            throw JWTError.generic(identifier: "ecCoordinates", reason: "EC coordinates retrieval failed");
+        }
+
+        return Parameters(x: bnX.toBase64(), y: bnY.toBase64());
+    }
+
+
+    public struct Parameters {
+        public let x: String;
+        public let y: String;
+    }
+
 }
 
 // MARK: Private
