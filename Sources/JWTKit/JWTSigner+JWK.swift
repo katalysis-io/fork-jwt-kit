@@ -15,13 +15,32 @@ extension JWTSigners {
     
     /// Adds a `JWK` (JSON Web Key) to this signers collection.
     public func use(jwk: JWK) throws {
-        guard let kid = jwk.keyIdentifier else {
+        guard let kid = jwk.kid else {
             throw JWTError.invalidJWK
         }
-        try self.use(.jwk(jwk), kid: kid)
+        try self.use(.jwk(key:jwk), kid: kid)
     }
 }
 
+
+public extension JWTSigners {
+
+    convenience init(jwks: JWKS, skipAnonymousKeys: Bool = true) throws  {
+        self.init()
+        for jwk in jwks.keys {
+            guard let kid = jwk.kid else {
+                if skipAnonymousKeys {
+                    continue
+                } else {
+                    throw JWTError.generic(identifier: "missingKID", reason: "At least a JSON Web Key in the JSON Web Key Set is missing a `kid`.")
+                }
+            }
+
+            try self.use(JWTSigner.jwk(key: jwk), kid: kid)
+        }
+    }
+}
+/*
 extension JWTSigner {
     /// Creates a JWT sign from the supplied JWK json string.
     public static func jwk(json: String) throws -> JWTSigner {
@@ -47,8 +66,8 @@ extension JWTSigner {
                 modulus: modulus,
                 exponent: exponent,
                 privateExponent: key.privateExponent
-            ) else {
-                throw JWTError.invalidJWK
+                ) else {
+                    throw JWTError.invalidJWK
             }
             
             switch algorithm {
@@ -58,7 +77,36 @@ extension JWTSigner {
                 return JWTSigner.rs384(key: rsaKey)
             case .rs512:
                 return JWTSigner.rs512(key: rsaKey)
+            default:
+                throw JWTError.invalidJWK
             }
+        case .ec:
+            guard let x = key.modulus else {
+                throw JWTError.invalidJWK
+            }
+            guard let y = key.exponent else {
+                throw JWTError.invalidJWK
+            }
+            guard let algorithm = key.algorithm else {
+                throw JWTError.invalidJWK
+            }
+            
+            guard let ecdsaKey = try? ECDSAKey.components(x: x, y: y) else {
+                    throw JWTError.invalidJWK
+            }
+            
+            switch algorithm {
+            case .es256:
+                return JWTSigner.es256(key: ecdsaKey)
+            case .es384:
+                return JWTSigner.es384(key: ecdsaKey)
+            case .es512:
+                return JWTSigner.es512(key: ecdsaKey)
+            default:
+                throw JWTError.invalidJWK
+            }
+            
         }
     }
 }
+*/
