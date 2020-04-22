@@ -72,8 +72,8 @@ class JWTKitTests: XCTestCase {
     }
 
     func testRSA() throws {
-        let privateSigner = try JWTSigner.rs256(key: .private(pem: CryptoData.bytes(rsaPrivateKey.bytes)))
-        let publicSigner = try JWTSigner.rs256(key: .public(pem: CryptoData.bytes(rsaPublicKey.bytes)))
+        let privateSigner = try JWTSigner.rs256(key: .private(pem: rsaPrivateKey.bytes))
+        let publicSigner = try JWTSigner.rs256(key: .public(pem: rsaPublicKey.bytes))
 
         let payload = TestPayload(
             sub: "vapor",
@@ -88,7 +88,7 @@ class JWTKitTests: XCTestCase {
     }
 
     func testRSASignWithPublic() throws {
-        let publicSigner = try JWTSigner.rs256(key: .public(pem: CryptoData.bytes(rsaPublicKey.bytes)))
+        let publicSigner = try JWTSigner.rs256(key: .public(pem: rsaPublicKey.bytes))
         let payload = TestPayload(
             sub: "vapor",
             name: "Foo",

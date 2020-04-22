@@ -1,4 +1,4 @@
-import CCryptoOpenSSL
+import CJWTKitBoringSSL
 
 extension JWTSigner {
     // MARK: ECDSA
@@ -6,7 +6,7 @@ extension JWTSigner {
     public static func es256(key: ECDSAKey) -> JWTSigner {
         return .init(algorithm: ECDSASigner(
             key: key,
-            algorithm: convert(EVP_sha256()),
+            algorithm: convert(CJWTKitBoringSSL_EVP_sha256()),
             name: "ES256"
         ))
     }
@@ -14,7 +14,7 @@ extension JWTSigner {
     public static func es384(key: ECDSAKey) -> JWTSigner {
         return .init(algorithm: ECDSASigner(
             key: key,
-            algorithm: convert(EVP_sha384()),
+            algorithm: convert(CJWTKitBoringSSL_EVP_sha384()),
             name: "ES384"
         ))
     }
@@ -22,7 +22,7 @@ extension JWTSigner {
     public static func es512(key: ECDSAKey) -> JWTSigner {
         return .init(algorithm: ECDSASigner(
             key: key,
-            algorithm: convert(EVP_sha512()),
+            algorithm: convert(CJWTKitBoringSSL_EVP_sha512()),
             name: "ES512"
         ))
     }
@@ -30,17 +30,17 @@ extension JWTSigner {
 
 public final class ECDSAKey: OpenSSLKey {
     public static func generate() throws -> ECDSAKey {
-        guard let c = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1) else {
+        guard let c = CJWTKitBoringSSL_EC_KEY_new_by_curve_name(NID_X9_62_prime256v1) else {
             throw JWTError.signingAlgorithmFailure(ECDSAError.newKeyByCurveFailure)
         }
-        guard EC_KEY_generate_key(c) != 0 else {
+        guard CJWTKitBoringSSL_EC_KEY_generate_key(c) != 0 else {
             throw JWTError.signingAlgorithmFailure(ECDSAError.generateKeyFailure)
         }
         return .init(c)
     }
 
     public static func components(x: String, y: String) throws -> ECDSAKey {
-        guard let c = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1) else {
+        guard let c = CJWTKitBoringSSL_EC_KEY_new_by_curve_name(NID_X9_62_prime256v1) else {
             throw JWTError.signingAlgorithmFailure(ECDSAError.newKeyByCurveFailure)
         }
 
@@ -51,7 +51,7 @@ public final class ECDSAKey: OpenSSLKey {
             throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to interpret y as BN");
         }
 
-        if (1 != EC_KEY_set_public_key_affine_coordinates(c, bnX.c, bnY.c)) {
+        if (1 != CJWTKitBoringSSL_EC_KEY_set_public_key_affine_coordinates(c, bnX.c, bnY.c)) {
             throw JWTError.generic(identifier: "ecCoordinates", reason: "Unable to set public key");
         }
 
@@ -62,7 +62,7 @@ public final class ECDSAKey: OpenSSLKey {
         where Data: DataProtocol
     {
         let c = try self.load(pem: data) { bio in
-            PEM_read_bio_EC_PUBKEY(convert(bio), nil, nil, nil)
+            CJWTKitBoringSSL_PEM_read_bio_EC_PUBKEY(bio, nil, nil, nil)
         }
         return self.init(c)
     }
@@ -71,18 +71,18 @@ public final class ECDSAKey: OpenSSLKey {
         where Data: DataProtocol
     {
         let c = try self.load(pem: data) { bio in
-            PEM_read_bio_ECPrivateKey(convert(bio), nil, nil, nil)
+            CJWTKitBoringSSL_PEM_read_bio_ECPrivateKey(bio, nil, nil, nil)
         }
         return self.init(c)
     }
 
     public func getParameters() throws -> Parameters {
-        let group: OpaquePointer = EC_KEY_get0_group(self.c);
-        let pubKey: OpaquePointer = EC_KEY_get0_public_key(self.c);
+        let group: OpaquePointer = CJWTKitBoringSSL_EC_KEY_get0_group(self.c);
+        let pubKey: OpaquePointer = CJWTKitBoringSSL_EC_KEY_get0_public_key(self.c);
 
         let bnX = BN();
         let bnY = BN();
-        if (EC_POINT_get_affine_coordinates_GFp(group, pubKey, bnX.c, bnY.c, nil) != 1) {
+        if (CJWTKitBoringSSL_EC_POINT_get_affine_coordinates_GFp(group, pubKey, bnX.c, bnY.c, nil) != 1) {
             throw JWTError.generic(identifier: "ecCoordinates", reason: "EC coordinates retrieval failed");
         }
 
@@ -97,7 +97,7 @@ public final class ECDSAKey: OpenSSLKey {
     }
 
     deinit {
-        EC_KEY_free(self.c)
+        CJWTKitBoringSSL_EC_KEY_free(self.c)
     }
 
     public struct Parameters {
@@ -125,11 +125,11 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
         var signatureLength: UInt32 = 0
         var signature = [UInt8](
             repeating: 0,
-            count: Int(ECDSA_size(self.key.c))
+            count: Int(CJWTKitBoringSSL_ECDSA_size(self.key.c))
         )
 
         let digest = try self.digest(plaintext)
-        guard ECDSA_sign(
+        guard CJWTKitBoringSSL_ECDSA_sign(
             0,
             digest,
             numericCast(digest.count),
@@ -151,7 +151,7 @@ private struct ECDSASigner: JWTAlgorithm, OpenSSLSigner {
     {
         let digest = try self.digest(plaintext)
         let signature = signature.copyBytes()
-        return ECDSA_verify(
+        return CJWTKitBoringSSL_ECDSA_verify(
             0,
             digest,
             numericCast(digest.count),

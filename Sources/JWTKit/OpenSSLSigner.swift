@@ -1,4 +1,4 @@
-import CCryptoOpenSSL
+import CJWTKitBoringSSL
 import Foundation
 
 protocol OpenSSLSigner {
@@ -17,20 +17,20 @@ extension OpenSSLSigner {
     func digest<Plaintext>(_ plaintext: Plaintext) throws -> [UInt8]
         where Plaintext: DataProtocol
     {
-        let context = EVP_MD_CTX_new()
-        defer { EVP_MD_CTX_free(context) }
+        let context = CJWTKitBoringSSL_EVP_MD_CTX_new()
+        defer { CJWTKitBoringSSL_EVP_MD_CTX_free(context) }
 
-        guard EVP_DigestInit_ex(context, convert(self.algorithm), nil) == 1 else {
+        guard CJWTKitBoringSSL_EVP_DigestInit_ex(context, convert(self.algorithm), nil) == 1 else {
             throw JWTError.signingAlgorithmFailure(OpenSSLError.digestInitializationFailure)
         }
         let plaintext = plaintext.copyBytes()
-        guard EVP_DigestUpdate(context, plaintext, plaintext.count) == 1 else {
+        guard CJWTKitBoringSSL_EVP_DigestUpdate(context, plaintext, plaintext.count) == 1 else {
             throw JWTError.signingAlgorithmFailure(OpenSSLError.digestUpdateFailure)
         }
         var digest: [UInt8] = .init(repeating: 0, count: Int(EVP_MAX_MD_SIZE))
         var digestLength: UInt32 = 0
 
-        guard EVP_DigestFinal_ex(context, &digest, &digestLength) == 1 else {
+        guard CJWTKitBoringSSL_EVP_DigestFinal_ex(context, &digest, &digestLength) == 1 else {
             throw JWTError.signingAlgorithmFailure(OpenSSLError.digestFinalizationFailure)
         }
         return .init(digest[0..<Int(digestLength)])
@@ -40,19 +40,19 @@ extension OpenSSLSigner {
 public protocol OpenSSLKey { }
 
 extension OpenSSLKey {
-    static func load<Data, T>(pem data: Data, _ closure: (OpaquePointer) -> (T?)) throws -> T
+    static func load<Data, T>(pem data: Data, _ closure: (UnsafeMutablePointer<bio_st>) -> (T?)) throws -> T
         where Data: DataProtocol
     {
-        let bio = BIO_new(BIO_s_mem())
-        defer { BIO_free(bio) }
+        let bio = CJWTKitBoringSSL_BIO_new(CJWTKitBoringSSL_BIO_s_mem())
+        defer { CJWTKitBoringSSL_BIO_free(bio) }
 
         guard (data.copyBytes() + [0]).withUnsafeBytes({ pointer in
-            BIO_puts(bio, pointer.baseAddress?.assumingMemoryBound(to: Int8.self))
+            CJWTKitBoringSSL_BIO_puts(bio, pointer.baseAddress?.assumingMemoryBound(to: Int8.self))
         }) >= 0 else {
             throw JWTError.signingAlgorithmFailure(OpenSSLError.bioPutsFailure)
         }
 
-        guard let c = closure(convert(bio!)) else {
+        guard let c = closure(bio!) else {
             throw JWTError.signingAlgorithmFailure(OpenSSLError.bioConversionFailure)
         }
         return c
@@ -60,27 +60,25 @@ extension OpenSSLKey {
 }
 
 class BN {
-    let c: OpaquePointer;
+    let c: UnsafeMutablePointer<BIGNUM>?;
 
     public init() {
-        self.c = BN_new();
+        self.c = CJWTKitBoringSSL_BN_new();
     }
 
-    init(_ ptr: OpaquePointer) {
+    init(_ ptr: UnsafeMutablePointer<BIGNUM>?) {
         self.c = ptr;
     }
 
     deinit {
-        BN_free(self.c);
+        CJWTKitBoringSSL_BN_free(self.c);
     }
 
     public static func convert(_ bnBase64: String) -> BN? {
-        guard let data = Data(base64URLEncoded: bnBase64) else {
-            return nil
-        }
+        let data = Data(bnBase64.utf8).base64URLDecodedBytes()
 
-        let c = data.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> OpaquePointer in
-            return BN_bin2bn(p.baseAddress?.assumingMemoryBound(to: UInt8.self), Int32(p.count), nil)
+        let c = data.withUnsafeBytes { (p: UnsafeRawBufferPointer) -> UnsafeMutablePointer<BIGNUM> in
+            return CJWTKitBoringSSL_BN_bin2bn(p.baseAddress?.assumingMemoryBound(to: UInt8.self), p.count, nil)
         };
         return BN(c);
     }
@@ -89,8 +87,8 @@ class BN {
         let pBuffer = UnsafeMutablePointer<UInt8>.allocate(capacity: size);
         defer { pBuffer.deallocate() };
 
-        let actualBytes = Int(BN_bn2bin(self.c, pBuffer));
+        let actualBytes = Int(CJWTKitBoringSSL_BN_bn2bin(self.c, pBuffer));
         let data = Data(bytes: pBuffer, count: actualBytes);
-        return data.base64URLEncodedString();
+        return String(bytes: data.base64URLEncodedBytes(), encoding: .utf8) ?? "";
     }
 }

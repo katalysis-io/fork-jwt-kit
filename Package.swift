@@ -11,10 +11,20 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto.git", from: "1.0.0")
-     ],
+     /* This target is used only for symbol mangling. It's added and removed automatically because it emits build warnings. MANGLE_START
+     .library(name: "CJWTKitBoringSSL", type: .static, targets: ["CJWTKitBoringSSL"]),
+     MANGLE_END */
+    ],
     targets: [
-        .target(name: "JWTKit", dependencies: [.product(name: "Crypto", package: "swift-crypto")]),
-        .target(name: "JWT", dependencies: [.product(name: "Crypto", package: "swift-crypto"), "JWTKit"]),
+        .target(name: "CJWTKitBoringSSL"),
+        .target(name: "JWTKit", dependencies: [
+            .target(name: "CJWTKitBoringSSL"),
+            .product(name: "Crypto", package: "swift-crypto"),
+        ]),
+        .target(name: "JWT", dependencies: ["JWTKit",
+            .target(name: "CJWTKitBoringSSL"),
+            .product(name: "Crypto", package: "swift-crypto"),
+        ]),
         .testTarget(name: "JWTKitTests", dependencies: ["JWTKit"]),
     ]
 )

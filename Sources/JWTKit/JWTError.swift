@@ -6,6 +6,7 @@ public enum JWTError: Error, CustomStringConvertible, LocalizedError {
     case signatureVerifictionFailed
     case missingKIDHeader
     case unknownKID(String)
+    case invalidJWK
     case generic(identifier: String, reason: String)
 
     public var reason: String {
@@ -22,6 +23,8 @@ public enum JWTError: Error, CustomStringConvertible, LocalizedError {
             return "missing kid field in header"
         case .unknownKID(let kid):
             return "unknown kid: \(kid)"
+        case .invalidJWK:
+            return "invalid JWK"
         case .generic(let identifier, let reason):
             return "missing '\(identifier). \(reason)"
         }

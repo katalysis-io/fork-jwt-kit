@@ -1,5 +1,5 @@
 import Foundation
-import CryptoKit
+import Crypto
 import JWTKit
 
 /// A JSON Web Key.
@@ -162,10 +162,10 @@ public extension JWTSigner {
     static func jwk(key: JWK) throws -> JWTSigner {
         switch key.kty.lowercased() {
         case "rsa":
-            guard let n = key.n else {
+            guard let modulus = key.n else {
                 throw JWTError.generic(identifier: "missingModulus", reason: "Modulus not specified for JWK RSA key.")
             }
-            guard let e = key.e else {
+            guard let exponent = key.e else {
                 throw JWTError.generic(identifier: "missingExponent", reason: "Exponent not specified for JWK RSA key.")
             }
 
@@ -173,7 +173,13 @@ public extension JWTSigner {
                 throw JWTError.generic(identifier: "missingAlgorithm", reason: "Algorithm missing for JWK RSA key.")
             }
 
-            let rsaKey = try RSAKey.components(n: n, e: e, d: key.d)
+            guard let rsaKey = RSAKey(
+                modulus: modulus,
+                exponent: exponent,
+                privateExponent: key.d
+            ) else {
+                throw JWTError.invalidJWK
+            }
 
             switch algorithm {
             case "rs256":
